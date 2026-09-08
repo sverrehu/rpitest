@@ -13,14 +13,14 @@ import (
 )
 
 func main() {
-	webcam, err := gocv.OpenVideoCapture(0)
+	webcam, err := gocv.OpenVideoCaptureWithAPI(0, gocv.VideoCaptureV4L2)
 	if err != nil {
 		log.Fatalf("Error opening webcam: %v", err)
 	}
 	defer webcam.Close()
 	img := gocv.NewMat()
 	defer img.Close()
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 	fmt.Println("Starting continuous image capture... Press Ctrl+C to stop.")
 	for range ticker.C {
