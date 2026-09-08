@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	webcam, err := gocv.OpenVideoCaptureWithAPI(0, gocv.VideoCaptureV4L2)
+	webcam, err := gocv.OpenVideoCapture(0)
 	if err != nil {
 		log.Fatalf("Error opening webcam: %v", err)
 	}
