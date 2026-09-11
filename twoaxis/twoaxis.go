@@ -24,9 +24,24 @@ func main() {
 		log.Panic(err)
 	}
 	defer close()
+	dPan := 0.2
+	dTilt := 0.2
+	pan := (panMaxAngle - panMinAngle) / 2.0
+	tilt := (tiltMaxAngle - tiltMinAngle) / 2.0
 	for angle := 0; angle <= 180; angle++ {
-		panServo.SetAngle(float64(angle))
-		time.Sleep(100 * time.Millisecond)
+		panServo.SetAngle(pan)
+		tiltServo.SetAngle(tilt)
+		pan += dPan
+		if pan < panMaxAngle || pan > panMaxAngle {
+			dPan = -dPan
+			pan += dPan
+		}
+		tilt += dTilt
+		if tilt < tiltMaxAngle || tilt > tiltMaxAngle {
+			dTilt = -dTilt
+			tilt += dTilt
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 	center()
 	log.Println("Servos reset. Sleeping a little.")
