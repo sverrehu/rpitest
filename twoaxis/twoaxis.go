@@ -29,8 +29,14 @@ func main() {
 	pan := (panMaxAngle - panMinAngle) / 2.0
 	tilt := (tiltMaxAngle - tiltMinAngle) / 2.0
 	for {
-		panServo.SetAngle(pan)
-		tiltServo.SetAngle(tilt)
+		err := panServo.SetAngle(pan)
+		if err != nil {
+			log.Panic(err)
+		}
+		err = tiltServo.SetAngle(tilt)
+		if err != nil {
+			log.Panic(err)
+		}
 		pan += dPan
 		if pan < panMaxAngle || pan > panMaxAngle {
 			dPan = -dPan
