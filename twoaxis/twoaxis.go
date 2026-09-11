@@ -28,7 +28,7 @@ func main() {
 	dTilt := 0.2
 	pan := (panMaxAngle - panMinAngle) / 2.0
 	tilt := (tiltMaxAngle - tiltMinAngle) / 2.0
-	for angle := 0; angle <= 180; angle++ {
+	for {
 		panServo.SetAngle(pan)
 		tiltServo.SetAngle(tilt)
 		pan += dPan
