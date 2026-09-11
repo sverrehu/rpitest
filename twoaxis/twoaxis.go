@@ -8,35 +8,27 @@ import (
 	"github.com/sverrehu/rpigo/pwm"
 )
 
-const horizChan = 2
-const vertChan = 3
-const horizMinAngle = 0
-const horizMaxAngle = 180
-const vertMinAngle = 65 // points up
-const vertMaxAngle = 180
+const panChan = 2
+const tiltChan = 3
+const panMinAngle = 0
+const panMaxAngle = 180
+const tiltMinAngle = 65 // points up
+const tiltMaxAngle = 180
+
+var panServo *component.Servo
+var tiltServo *component.Servo
 
 func main() {
-	gpio, err := component.NewGPIO()
+	err := setupServos()
 	if err != nil {
 		log.Panic(err)
 	}
-	defer gpio.Close()
-	horizServo, err := newServo(horizChan)
-	if err != nil {
-		log.Panic(err)
-	}
-	defer horizServo.Close()
-	vertServo, err := newServo(vertChan)
-	if err != nil {
-		log.Panic(err)
-	}
-	defer vertServo.Close()
+	defer close()
 	for angle := 0; angle <= 180; angle++ {
-		horizServo.SetAngle(float64(angle))
+		panServo.SetAngle(float64(angle))
 		time.Sleep(100 * time.Millisecond)
 	}
-	horizServo.SetAngle((horizMaxAngle - horizMinAngle) / 2)
-	vertServo.SetAngle((vertMaxAngle - vertMinAngle) / 2)
+	center()
 	log.Println("Servos reset. Sleeping a little.")
 	time.Sleep(5 * time.Second)
 }
@@ -51,4 +43,38 @@ func newServo(channel int) (*component.Servo, error) {
 		return nil, err
 	}
 	return servo, nil
+}
+
+func setupServos() error {
+	var err error
+	panServo, err = newServo(panChan)
+	if err != nil {
+		return err
+	}
+	tiltServo, err = newServo(tiltChan)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func close() {
+	if tiltServo != nil {
+		_ = tiltServo.Close()
+	}
+	if panServo != nil {
+		_ = panServo.Close()
+	}
+}
+
+func center() error {
+	err := panServo.SetAngle((panMaxAngle - panMinAngle) / 2)
+	if err != nil {
+		return err
+	}
+	err = tiltServo.SetAngle((tiltMaxAngle - tiltMinAngle) / 2)
+	if err != nil {
+		return err
+	}
+	return nil
 }
