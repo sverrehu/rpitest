@@ -27,9 +27,9 @@ func main() {
 		log.Panic(err)
 	}
 	defer vertServo.Close()
-	for angle := 0; angle <= 180; angle++ {
+	for angle := 60; angle <= 220; angle++ {
 		vertServo.SetAngle(float64(angle))
-		time.Sleep(1 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 	}
 	horizServo.SetAngle(90)
 	vertServo.SetAngle(90)
