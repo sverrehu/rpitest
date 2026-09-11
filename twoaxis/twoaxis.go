@@ -27,16 +27,10 @@ func main() {
 		log.Panic(err)
 	}
 	defer vertServo.Close()
-	vertServo.SetAngle(0)
-	time.Sleep(1 * time.Second)
-	vertServo.SetAngle(45)
-	time.Sleep(1 * time.Second)
-	vertServo.SetAngle(90)
-	time.Sleep(1 * time.Second)
-	vertServo.SetAngle(135)
-	time.Sleep(1 * time.Second)
-	vertServo.SetAngle(180)
-	time.Sleep(1 * time.Second)
+	for angle := 0; angle <= 180; angle++ {
+		vertServo.SetAngle(0)
+		time.Sleep(1 * time.Second)
+	}
 	horizServo.SetAngle(90)
 	vertServo.SetAngle(90)
 	log.Println("Servos reset. Sleeping a little.")
