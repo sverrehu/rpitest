@@ -38,7 +38,7 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
-		pan += dPan
+		//pan += dPan
 		if pan < panMinAngle || pan > panMaxAngle {
 			dPan = -dPan
 			pan += dPan
