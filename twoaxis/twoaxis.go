@@ -39,7 +39,8 @@ func main() {
 	time.Sleep(1 * time.Second)
 	horizServo.SetAngle(90)
 	vertServo.SetAngle(90)
-	time.Sleep(1 * time.Second)
+	log.Println("Servos reset. Sleeping a little.")
+	time.Sleep(5 * time.Second)
 }
 
 func newServo(channel int) (*component.Servo, error) {
