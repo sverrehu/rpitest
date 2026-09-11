@@ -39,12 +39,12 @@ func main() {
 			log.Panic(err)
 		}
 		pan += dPan
-		if pan < panMaxAngle || pan > panMaxAngle {
+		if pan < panMinAngle || pan > panMaxAngle {
 			dPan = -dPan
 			pan += dPan
 		}
 		tilt += dTilt
-		if tilt < tiltMaxAngle || tilt > tiltMaxAngle {
+		if tilt < tiltMinAngle || tilt > tiltMaxAngle {
 			dTilt = -dTilt
 			tilt += dTilt
 		}
