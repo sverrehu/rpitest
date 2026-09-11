@@ -24,12 +24,11 @@ func main() {
 		log.Panic(err)
 	}
 	defer close()
-	dPan := 0.2
-	dTilt := 0.2
+	dPan := 0.1
+	dTilt := 0.1
 	pan := panMinAngle + (panMaxAngle-panMinAngle)/2.0
 	tilt := tiltMinAngle + (tiltMaxAngle-tiltMinAngle)/2.0
 	for {
-		log.Printf("Pan: %f, Tilt: %f, dPan: %f, dTilt: %f", pan, tilt, dPan, dTilt)
 		err := panServo.SetAngle(pan)
 		if err != nil {
 			log.Panic(err)
@@ -38,17 +37,17 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
-		//pan += dPan
-		if pan < panMinAngle || pan > panMaxAngle {
+		pan += dPan
+		if pan < panMinAngle/2 || pan > panMaxAngle/2 {
 			dPan = -dPan
 			pan += dPan
 		}
 		tilt += dTilt
-		if tilt < tiltMinAngle || tilt > tiltMaxAngle {
+		if tilt < tiltMinAngle/2 || tilt > tiltMaxAngle/2 {
 			dTilt = -dTilt
 			tilt += dTilt
 		}
-		time.Sleep(1 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 	center()
 	log.Println("Servos reset. Sleeping a little.")
