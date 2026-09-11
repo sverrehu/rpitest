@@ -8,29 +8,48 @@ import (
 	"github.com/sverrehu/rpigo/pwm"
 )
 
+const horizChan = 2
+const vertChan = 3
+
 func main() {
 	gpio, err := component.NewGPIO()
 	if err != nil {
 		log.Panic(err)
 	}
 	defer gpio.Close()
-	pwm, err := pwm.NewHardPWM(0, 2, 50)
+	horizServo, err := newServo(horizChan)
 	if err != nil {
 		log.Panic(err)
+	}
+	defer horizServo.Close()
+	vertServo, err := newServo(vertChan)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer vertServo.Close()
+	horizServo.SetAngle(0)
+	time.Sleep(1 * time.Second)
+	horizServo.SetAngle(45)
+	time.Sleep(1 * time.Second)
+	horizServo.SetAngle(90)
+	time.Sleep(1 * time.Second)
+	horizServo.SetAngle(135)
+	time.Sleep(1 * time.Second)
+	horizServo.SetAngle(180)
+	time.Sleep(1 * time.Second)
+	horizServo.SetAngle(90)
+	vertServo.SetAngle(90)
+	time.Sleep(1 * time.Second)
+}
+
+func newServo(channel int) (*component.Servo, error) {
+	pwm, err := pwm.NewHardPWM(0, channel, 50)
+	if err != nil {
+		return nil, err
 	}
 	servo, err := component.NewServo(pwm)
 	if err != nil {
-		log.Panic(err)
+		return nil, err
 	}
-	defer servo.Close()
-	servo.SetAngle(0)
-	time.Sleep(1 * time.Second)
-	servo.SetAngle(45)
-	time.Sleep(1 * time.Second)
-	servo.SetAngle(90)
-	time.Sleep(1 * time.Second)
-	servo.SetAngle(135)
-	time.Sleep(1 * time.Second)
-	servo.SetAngle(180)
-	time.Sleep(1 * time.Second)
+	return servo, nil
 }
