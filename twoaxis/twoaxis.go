@@ -48,7 +48,7 @@ func main() {
 			dTilt = -dTilt
 			tilt += dTilt
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(1 * time.Millisecond)
 	}
 	center()
 	log.Println("Servos reset. Sleeping a little.")
