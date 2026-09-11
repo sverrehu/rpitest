@@ -10,6 +10,8 @@ import (
 
 const horizChan = 2
 const vertChan = 3
+const verMinAngle = 65 // points up
+const verMaxAngle = 180
 
 func main() {
 	gpio, err := component.NewGPIO()
@@ -27,8 +29,8 @@ func main() {
 		log.Panic(err)
 	}
 	defer vertServo.Close()
-	for angle := 60; angle <= 220; angle++ {
-		vertServo.SetAngle(float64(angle))
+	for angle := 0; angle <= 180; angle++ {
+		horizServo.SetAngle(float64(angle))
 		time.Sleep(500 * time.Millisecond)
 	}
 	horizServo.SetAngle(90)
