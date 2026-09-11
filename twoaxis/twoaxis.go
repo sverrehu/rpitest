@@ -13,7 +13,7 @@ const tiltChan = 3
 const panMinAngle = 0
 const panMaxAngle = 180
 const tiltMinAngle = 65 // points up
-const tiltMaxAngle = 170
+const tiltMaxAngle = 180
 
 var panServo *component.Servo
 var tiltServo *component.Servo
