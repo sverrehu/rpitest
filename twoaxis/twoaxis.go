@@ -26,8 +26,8 @@ func main() {
 	defer close()
 	dPan := 0.2
 	dTilt := 0.2
-	pan := (panMaxAngle - panMinAngle) / 2.0
-	tilt := (tiltMaxAngle - tiltMinAngle) / 2.0
+	pan := panMinAngle + (panMaxAngle-panMinAngle)/2.0
+	tilt := tiltMinAngle + (tiltMaxAngle-tiltMinAngle)/2.0
 	for {
 		log.Printf("Pan: %f, Tilt: %f, dPan: %f, dTilt: %f", pan, tilt, dPan, dTilt)
 		err := panServo.SetAngle(pan)
@@ -90,11 +90,11 @@ func close() {
 }
 
 func center() error {
-	err := panServo.SetAngle((panMaxAngle - panMinAngle) / 2)
+	err := panServo.SetAngle(panMinAngle + (panMaxAngle-panMinAngle)/2)
 	if err != nil {
 		return err
 	}
-	err = tiltServo.SetAngle((tiltMaxAngle - tiltMinAngle) / 2)
+	err = tiltServo.SetAngle(tiltMinAngle + (tiltMaxAngle-tiltMinAngle)/2)
 	if err != nil {
 		return err
 	}
