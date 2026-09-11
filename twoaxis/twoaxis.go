@@ -24,8 +24,8 @@ func main() {
 		log.Panic(err)
 	}
 	defer close()
-	dPan := 0.1
-	dTilt := 0.1
+	dPan := 0.3
+	dTilt := 0.3
 	pan := panMinAngle + (panMaxAngle-panMinAngle)/2.0
 	tilt := tiltMinAngle + (tiltMaxAngle-tiltMinAngle)/2.0
 	for {
