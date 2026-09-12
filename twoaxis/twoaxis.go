@@ -18,6 +18,8 @@ const panMinAngle = 0
 const panMaxAngle = 180
 const tiltMinAngle = 65 // points up
 const tiltMaxAngle = 180
+const panDegreesPerPixel = 0.3 // just a random number for now
+const tiltDegreesPerPixel = 0.3
 
 var panServo *component.Servo
 var tiltServo *component.Servo
