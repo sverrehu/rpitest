@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -111,5 +112,6 @@ func installTerminationHandler() {
 		defer stop()
 		<-ctx.Done()
 		close()
+		os.Exit(0)
 	}()
 }
