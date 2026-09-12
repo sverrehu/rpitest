@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/sverrehu/rpigo/component"
@@ -24,6 +27,7 @@ func main() {
 		log.Panic(err)
 	}
 	defer close()
+	installTerminationHandler()
 	dPan := 0.3
 	dTilt := 0.3
 	pan := panMinAngle + (panMaxAngle-panMinAngle)/2.0
@@ -80,6 +84,7 @@ func setupServos() error {
 }
 
 func close() {
+	log.Println("Closing servos.")
 	if tiltServo != nil {
 		_ = tiltServo.Close()
 	}
@@ -98,4 +103,13 @@ func center() error {
 		return err
 	}
 	return nil
+}
+
+func installTerminationHandler() {
+	go func() {
+		ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+		defer stop()
+		<-ctx.Done()
+		close()
+	}()
 }
