@@ -18,18 +18,18 @@ type MJPEGSplitter struct {
 	stream         io.Reader
 	terminate      bool
 	lastImageBytes []byte
-	listener       func()
+	listener       func(*MJPEGSplitter)
 	lastImageMutex sync.Mutex
 }
 
-func NewMJPEGSplitter(stream io.Reader, listener func()) *MJPEGSplitter {
+func NewMJPEGSplitter(stream io.Reader, listener func(*MJPEGSplitter)) *MJPEGSplitter {
 	m := &MJPEGSplitter{stream: stream, terminate: false, listener: listener}
 	go m.inputHandlerLoop()
 	return m
 }
 
 func (m *MJPEGSplitter) GetLastImage() *image.Image {
-	imageBytes := m.getLastImageBytes()
+	imageBytes := m.GetLastImageBytes()
 	if imageBytes == nil {
 		return nil
 	}
@@ -40,16 +40,16 @@ func (m *MJPEGSplitter) GetLastImage() *image.Image {
 	return &img
 }
 
+func (m *MJPEGSplitter) GetLastImageBytes() []byte {
+	m.lastImageMutex.Lock()
+	defer m.lastImageMutex.Unlock()
+	return m.lastImageBytes
+}
+
 func (m *MJPEGSplitter) setLastImageBytes(bytes []byte) {
 	m.lastImageMutex.Lock()
 	defer m.lastImageMutex.Unlock()
 	m.lastImageBytes = bytes
-}
-
-func (m *MJPEGSplitter) getLastImageBytes() []byte {
-	m.lastImageMutex.Lock()
-	defer m.lastImageMutex.Unlock()
-	return m.lastImageBytes
 }
 
 func (m *MJPEGSplitter) inputHandlerLoop() {
@@ -72,7 +72,7 @@ func (m *MJPEGSplitter) inputHandlerLoop() {
 				jpegBytes := streamBuffer[startIdx:endIdx]
 				m.setLastImageBytes(jpegBytes)
 				if m.listener != nil {
-					m.listener()
+					m.listener(m)
 				}
 				streamBuffer = streamBuffer[endIdx:]
 			}
