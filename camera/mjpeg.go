@@ -6,6 +6,7 @@ import (
 	_ "image/jpeg" // Register JPEG decoder
 	_ "image/png"  // Register PNG decoder
 	"io"
+	"log"
 	"sync"
 )
 
@@ -53,10 +54,12 @@ func (m *MJPEGSplitter) setLastImageBytes(bytes []byte) {
 }
 
 func (m *MJPEGSplitter) inputHandlerLoop() {
+	log.Print("Starting MJPEGSplitter inputHandlerLoop")
 	buf := make([]byte, 65536)
 	var streamBuffer []byte
 	for !m.terminate {
 		n, err := m.stream.Read(buf)
+		log.Printf("Got %d bytes", n)
 		if n > 0 {
 			streamBuffer = append(streamBuffer, buf[:n]...)
 			for {
