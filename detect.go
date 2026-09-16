@@ -40,6 +40,10 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
+		_, err = det.Detect(img)
+		if err != nil {
+			panic(err)
+		}
 		annotateDetections(img)
 		err = rpiview.PostJPEG(img)
 		if err != nil {
