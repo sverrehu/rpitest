@@ -25,6 +25,9 @@ func main() {
 	for range ticker.C {
 		startTime := time.Now()
 		img, err := cam.GetImage()
+		if img == nil {
+			continue
+		}
 		elapsed := time.Since(startTime)
 		log.Printf("Captured image in %v", elapsed)
 		if err != nil {
