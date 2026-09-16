@@ -22,6 +22,13 @@ func (c *Camera) GetSingleImage() (*image.Image, error) {
 	return c.grabSingleImageUsingCommand()
 }
 
+func (c *Camera) GetImage() (*image.Image, error) {
+	if c.mjpegSplitter == nil {
+		return c.GetSingleImage()
+	}
+	return c.mjpegSplitter.GetLastImage(), nil
+}
+
 func (c *Camera) StartStreaming(listener func(*Camera)) error {
 	c.listener = listener
 	return c.grabStreamUsingCommand()
