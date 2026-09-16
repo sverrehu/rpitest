@@ -44,7 +44,11 @@ func (d *Detector) Close() {
 }
 
 func (d *Detector) Detect(img *image.RGBA) ([]Detection, error) {
-	_, err := d.loadAndProcessImage(img)
+	it, err := d.loadAndProcessImage(img)
+	if err != nil {
+		return nil, err
+	}
+	_, err = d.model.Forward(it.Raw())
 	if err != nil {
 		return nil, err
 	}
