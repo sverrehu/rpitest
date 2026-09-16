@@ -6,6 +6,7 @@ import (
 	"image"
 	_ "image/jpeg" // Register JPEG decoder
 	_ "image/png"  // Register PNG decoder
+	"log"
 	"os/exec"
 )
 
@@ -64,10 +65,12 @@ func (c *Camera) grabStreamUsingCommand() error {
 	var errBuffer bytes.Buffer
 	cmd.Stdout = &outBuffer
 	cmd.Stderr = &errBuffer
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to execute command: %v -- %s", err, errBuffer.String())
-	}
+	go func() {
+		err := cmd.Run()
+		if err != nil {
+			log.Fatalf("failed to execute command: %v -- %s", err, errBuffer.String())
+		}
+	}()
 	c.mjpegSplitter = NewMJPEGSplitter(&outBuffer, func(splitter *MJPEGSplitter) {
 		if c.listener != nil {
 			c.listener(c)

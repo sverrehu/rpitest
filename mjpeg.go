@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-
 	rpiview := imgposter.NewImagePoster("192.168.1.15", 8086)
 	filename := "/Users/sverrehu/Dropbox/tmp/film.mjpeg"
 	file, err := os.Open(filename)
