@@ -68,7 +68,7 @@ func (c *Camera) grabSingleImageUsingCommand() (*image.RGBA, error) {
 }
 
 func (c *Camera) grabStreamUsingCommand() error {
-	args := []string{"--nopreview", "-t", "0", "--codec", "mjpeg", "--quality", "85", "--inline", "-o", "-"}
+	args := []string{"--nopreview", "-t", "0", "--codec", "mjpeg", "--quality", "85", "--inline", "--width", "1920", "--height", "1080", "-o", "-"}
 	if c.Rotate {
 		args = append(args, "--rotation", "180")
 	}
