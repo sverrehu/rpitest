@@ -40,7 +40,7 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
-		annotate(img)
+		annotateDetections(img)
 		err = rpiview.PostJPEG(img)
 		if err != nil {
 			log.Panic(err)
@@ -48,7 +48,7 @@ func main() {
 	}
 }
 
-func annotate(img image.Image) {
+func annotateDetections(img image.Image) {
 	rgba, ok := img.(*image.RGBA)
 	if !ok {
 		panic("Image is not RGBA")
