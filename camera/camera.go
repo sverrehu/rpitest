@@ -66,10 +66,12 @@ func (c *Camera) grabStreamUsingCommand() error {
 	cmd.Stdout = &outBuffer
 	cmd.Stderr = &errBuffer
 	go func() {
+		log.Print("Running rpicam-vid")
 		err := cmd.Run()
 		if err != nil {
 			log.Fatalf("failed to execute command: %v -- %s", err, errBuffer.String())
 		}
+		log.Print("Done running rpicam-vid")
 	}()
 	c.mjpegSplitter = NewMJPEGSplitter(&outBuffer, func(splitter *MJPEGSplitter) {
 		if c.listener != nil {
