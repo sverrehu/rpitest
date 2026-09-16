@@ -1,36 +1,40 @@
 package camera
 
-// for video:
-// rpicam-vid --nopreview -t 0 --codec mjpeg --quality 85 --inline -o -
-
 import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/jpeg"
 	_ "image/jpeg" // Register JPEG decoder
 	_ "image/png"  // Register PNG decoder
-	"log"
-	"os"
 	"os/exec"
 )
 
 type Camera struct {
+	listener      func(*Camera)
+	mjpegSplitter *MJPEGSplitter
 }
 
 func NewCamera() *Camera {
 	return &Camera{}
 }
 
-func (c *Camera) GetImage() (*image.Image, error) {
-	return c.grabImageUsingCommand()
+func (c *Camera) GetSingleImage() (*image.Image, error) {
+	return c.grabSingleImageUsingCommand()
+}
+
+func (c *Camera) StartStreaming(listener func(*Camera)) error {
+	c.listener = listener
+	return c.grabStreamUsingCommand()
 }
 
 func (c *Camera) Close() {
+	if c.mjpegSplitter != nil {
+		c.mjpegSplitter.terminate = true
+	}
 }
 
-func (c *Camera) grabImageUsingCommand() (*image.Image, error) {
-	cmd := exec.Command("rpicam-still", "--nopreview", "--zsl", "--immediate", "--thumb", "none", "--exposure", "sport", "--gain", "100", "--shutter", "25000", "--awbgains", "1,1", "-o", "-")
+func (c *Camera) grabSingleImageUsingCommand() (*image.Image, error) {
+	cmd := exec.Command("rpicam-still", "--nopreview", "--zsl", "--immediate", "--thumb", "none", "--exposure", "sport", "-o", "-")
 	var outBuffer bytes.Buffer
 	var errBuffer bytes.Buffer
 	cmd.Stdout = &outBuffer
@@ -47,23 +51,20 @@ func (c *Camera) grabImageUsingCommand() (*image.Image, error) {
 	return &img, nil
 }
 
-func main() {
-	c := NewCamera()
-	defer c.Close()
-	img, err := c.GetImage()
+func (c *Camera) grabStreamUsingCommand() error {
+	cmd := exec.Command("rpicam-vid", "--nopreview", "-t", "0", "--codec", "mjpeg", "--quality", "85", "--inline", "-o", "-")
+	var outBuffer bytes.Buffer
+	var errBuffer bytes.Buffer
+	cmd.Stdout = &outBuffer
+	cmd.Stderr = &errBuffer
+	err := cmd.Run()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to execute command: %v -- %s", err, errBuffer.String())
 	}
-	f, err := os.Create("/tmp/output.jpg")
-	if err != nil {
-		log.Fatalf("Failed to create file: %v", err)
-	}
-	defer f.Close()
-	options := &jpeg.Options{
-		Quality: 85,
-	}
-	err = jpeg.Encode(f, *img, options)
-	if err != nil {
-		log.Fatalf("Failed to encode JPEG: %v", err)
-	}
+	c.mjpegSplitter = NewMJPEGSplitter(&outBuffer, func(splitter *MJPEGSplitter) {
+		if c.listener != nil {
+			c.listener(c)
+		}
+	})
+	return nil
 }
