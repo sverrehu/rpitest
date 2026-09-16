@@ -24,13 +24,10 @@ func main() {
 	defer ticker.Stop()
 	fmt.Println("Starting continuous image capture... Press Ctrl+C to stop.")
 	for range ticker.C {
-		startTime := time.Now()
 		img, err := cam.GetImage()
 		if img == nil {
 			continue
 		}
-		elapsed := time.Since(startTime)
-		log.Printf("Captured image in %v", elapsed)
 		if err != nil {
 			log.Panic(err)
 		}

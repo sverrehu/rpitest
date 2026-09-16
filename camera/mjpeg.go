@@ -59,7 +59,6 @@ func (m *MJPEGSplitter) inputHandlerLoop() {
 	var streamBuffer []byte
 	for !m.terminate {
 		n, err := m.stream.Read(buf)
-		log.Printf("Got %d bytes", n)
 		if n > 0 {
 			streamBuffer = append(streamBuffer, buf[:n]...)
 			for {
