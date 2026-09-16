@@ -87,4 +87,5 @@ func (m *MJPEGSplitter) inputHandlerLoop() {
 			panic(err)
 		}
 	}
+	log.Print("Stopped MJPEGSplitter inputHandlerLoop")
 }
