@@ -45,7 +45,8 @@ func main() {
 			panic(err)
 		}
 		annotateDetections(img, detections)
-		err = rpiview.PostJPEG(img)
+		scaled, _ := det.scaleImage(img)
+		err = rpiview.PostJPEG(scaled)
 		if err != nil {
 			log.Panic(err)
 		}
