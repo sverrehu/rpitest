@@ -10,7 +10,9 @@ import (
 )
 
 func main() {
-	rpiview := imgposter.NewImagePoster("192.168.1.15", 8086)
+	//rpiviewHost := "192.168.1.15"
+	rpiviewHost := "192.168.30.21"
+	rpiview := imgposter.NewImagePoster(rpiviewHost, 8086)
 	cam := camera.NewCamera()
 	defer cam.Close()
 	err := cam.StartStreaming(nil)
