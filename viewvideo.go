@@ -48,6 +48,8 @@ func annotate(img image.Image) {
 		panic("Image is not RGBA")
 	}
 	id := imgdraw.NewImageDrawer(rgba)
-	id.Color(color.RGBA{0, 255, 0, 255})
-	id.Line(0, 0, rgba.Rect.Max.X, rgba.Rect.Max.Y)
+	bounds := rgba.Bounds()
+	id.Color(color.RGBA{255, 100, 100, 255})
+	id.Line(0, bounds.Dy()/2, bounds.Dx(), bounds.Dy()/2)
+	id.Line(bounds.Dx()/2, 0, bounds.Dx()/2, bounds.Dy())
 }
