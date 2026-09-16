@@ -15,6 +15,7 @@ func main() {
 	rpiview := imgposter.NewImagePoster(rpiviewHost, 8086)
 	cam := camera.NewCamera()
 	defer cam.Close()
+	cam.Rotate = true
 	err := cam.StartStreaming(nil)
 	if err != nil {
 		panic(err)

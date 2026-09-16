@@ -11,6 +11,7 @@ import (
 )
 
 type Camera struct {
+	Rotate        bool
 	listener      func(*Camera)
 	mjpegSplitter *MJPEGSplitter
 }
@@ -43,7 +44,11 @@ func (c *Camera) Close() {
 }
 
 func (c *Camera) grabSingleImageUsingCommand() (*image.Image, error) {
-	cmd := exec.Command("rpicam-still", "--nopreview", "--zsl", "--immediate", "--thumb", "none", "--exposure", "sport", "-o", "-")
+	args := []string{"--nopreview", "--zsl", "--immediate", "--thumb", "none", "--exposure", "sport", "-o", "-"}
+	if c.Rotate {
+		args = append(args, "--rotation", "180")
+	}
+	cmd := exec.Command("rpicam-still", args...)
 	var outBuffer bytes.Buffer
 	var errBuffer bytes.Buffer
 	cmd.Stdout = &outBuffer
@@ -61,7 +66,11 @@ func (c *Camera) grabSingleImageUsingCommand() (*image.Image, error) {
 }
 
 func (c *Camera) grabStreamUsingCommand() error {
-	cmd := exec.Command("rpicam-vid", "--nopreview", "-t", "0", "--codec", "mjpeg", "--quality", "85", "--inline", "-o", "-")
+	args := []string{"--nopreview", "-t", "0", "--codec", "mjpeg", "--quality", "85", "--inline", "-o", "-"}
+	if c.Rotate {
+		args = append(args, "--rotation", "180")
+	}
+	cmd := exec.Command("rpicam-vid", args...)
 	var errBuffer bytes.Buffer
 	cmd.Stderr = &errBuffer
 	outPipe, err := cmd.StdoutPipe()
