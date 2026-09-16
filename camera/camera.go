@@ -62,9 +62,7 @@ func (c *Camera) grabSingleImageUsingCommand() (*image.Image, error) {
 
 func (c *Camera) grabStreamUsingCommand() error {
 	cmd := exec.Command("rpicam-vid", "--nopreview", "-t", "0", "--codec", "mjpeg", "--quality", "85", "--inline", "-o", "-")
-	var outBuffer bytes.Buffer
 	var errBuffer bytes.Buffer
-	cmd.Stdout = &outBuffer
 	cmd.Stderr = &errBuffer
 	outPipe, err := cmd.StdoutPipe()
 	if err != nil {
