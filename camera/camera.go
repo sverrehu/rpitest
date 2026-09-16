@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/draw"
 	_ "image/jpeg" // Register JPEG decoder
 	_ "image/png"  // Register PNG decoder
 	"log"
@@ -20,11 +21,11 @@ func NewCamera() *Camera {
 	return &Camera{}
 }
 
-func (c *Camera) GetSingleImage() (*image.Image, error) {
+func (c *Camera) GetSingleImage() (*image.RGBA, error) {
 	return c.grabSingleImageUsingCommand()
 }
 
-func (c *Camera) GetImage() (*image.Image, error) {
+func (c *Camera) GetImage() (*image.RGBA, error) {
 	if c.mjpegSplitter == nil {
 		return c.GetSingleImage()
 	}
@@ -43,7 +44,7 @@ func (c *Camera) Close() {
 	}
 }
 
-func (c *Camera) grabSingleImageUsingCommand() (*image.Image, error) {
+func (c *Camera) grabSingleImageUsingCommand() (*image.RGBA, error) {
 	args := []string{"--nopreview", "--zsl", "--immediate", "--thumb", "none", "--exposure", "sport", "-o", "-"}
 	if c.Rotate {
 		args = append(args, "--rotation", "180")
@@ -62,7 +63,8 @@ func (c *Camera) grabSingleImageUsingCommand() (*image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &img, nil
+	rgba := toRGBA(img)
+	return rgba, nil
 }
 
 func (c *Camera) grabStreamUsingCommand() error {
@@ -91,4 +93,14 @@ func (c *Camera) grabStreamUsingCommand() error {
 		}
 	})
 	return nil
+}
+
+func toRGBA(img image.Image) *image.RGBA {
+	if rgba, ok := img.(*image.RGBA); ok {
+		return rgba
+	}
+	b := img.Bounds()
+	rgba := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	draw.Draw(rgba, rgba.Bounds(), img, b.Min, draw.Src)
+	return rgba
 }

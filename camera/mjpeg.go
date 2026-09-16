@@ -29,7 +29,7 @@ func NewMJPEGSplitter(stream io.Reader, listener func(*MJPEGSplitter)) *MJPEGSpl
 	return m
 }
 
-func (m *MJPEGSplitter) GetLastImage() *image.Image {
+func (m *MJPEGSplitter) GetLastImage() *image.RGBA {
 	imageBytes := m.GetLastImageBytes()
 	if imageBytes == nil {
 		return nil
@@ -38,7 +38,8 @@ func (m *MJPEGSplitter) GetLastImage() *image.Image {
 	if err != nil {
 		return nil
 	}
-	return &img
+	rgba := toRGBA(img)
+	return rgba
 }
 
 func (m *MJPEGSplitter) GetLastImageBytes() []byte {

@@ -17,7 +17,7 @@ func NewImagePoster(rpiviewHost string, rpiviewPort int) *ImagePoster {
 	return &ImagePoster{rpiviewURL: fmt.Sprintf("http://%s:%d/img", rpiviewHost, rpiviewPort)}
 }
 
-func (ip *ImagePoster) PostJPEG(img *image.Image) error {
+func (ip *ImagePoster) PostJPEG(img image.Image) error {
 	b, err := getJPEGBytes(img)
 	if err != nil {
 		return err
@@ -38,12 +38,12 @@ func (ip *ImagePoster) PostImageBytes(b []byte, contentType string) error {
 	return resp.Body.Close()
 }
 
-func getJPEGBytes(img *image.Image) ([]byte, error) {
+func getJPEGBytes(img image.Image) ([]byte, error) {
 	var buf bytes.Buffer
 	options := &jpeg.Options{
 		Quality: 85,
 	}
-	err := jpeg.Encode(&buf, *img, options)
+	err := jpeg.Encode(&buf, img, options)
 	if err != nil {
 		return nil, err
 	}
