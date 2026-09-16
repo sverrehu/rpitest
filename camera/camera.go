@@ -36,6 +36,7 @@ func (c *Camera) StartStreaming(listener func(*Camera)) error {
 }
 
 func (c *Camera) Close() {
+	log.Print("Closing camera")
 	if c.mjpegSplitter != nil {
 		c.mjpegSplitter.terminate = true
 	}
