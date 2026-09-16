@@ -51,6 +51,13 @@ func (id *ImageDrawer) Line(x0, y0, x1, y1 int) {
 	}
 }
 
+func (id *ImageDrawer) Rect(x0, y0, x1, y1 int) {
+	id.Line(x0, y0, x1, y0)
+	id.Line(x1, y0, x1, y1)
+	id.Line(x1, y1, x0, y1)
+	id.Line(x0, y1, x0, y0)
+}
+
 func abs(n int) int {
 	// Why is there no integer abs in Go?
 	if n >= 0 {

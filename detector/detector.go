@@ -17,8 +17,10 @@ type Detector struct {
 }
 
 type Detection struct {
-	x0, y0 int
-	x1, y1 int
+	X0, Y0 int
+	X1, Y1 int
+	Class  int
+	Score  float32
 }
 
 func NewDetector(modelPath string, width int, height int) *Detector {
@@ -43,16 +45,17 @@ func (d *Detector) Init() error {
 func (d *Detector) Close() {
 }
 
-func (d *Detector) Detect(img *image.RGBA) ([]Detection, error) {
+func (d *Detector) Detect(img *image.RGBA) ([]*Detection, error) {
 	it, err := d.loadAndProcessImage(img)
 	if err != nil {
 		return nil, err
 	}
-	_, err = d.model.Forward(it.Raw())
+	ot, err := d.model.Forward(it.Raw())
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+	detections := d.toDetections(ot)
+	return detections, nil
 }
 
 func (d *Detector) loadAndProcessImage(img *image.RGBA) (*tensor.Tensor[float32, tensor.Backend], error) {
@@ -78,4 +81,28 @@ func (d *Detector) loadAndProcessImage(img *image.RGBA) (*tensor.Tensor[float32,
 		return nil, err
 	}
 	return t, nil
+}
+
+func (d *Detector) toDetections(t *tensor.RawTensor) []*Detection {
+	// YOLO26 output format: [batch=1, num_detections=300, 6]
+	// Each detection row: [x1, y1, x2, y2, score, class]
+	data := t.AsFloat32()
+	numDetections := t.Shape()[1]
+	rowLen := t.Shape()[2]
+	confidenceThreshold := float32(0.25)
+	detections := make([]*Detection, 0)
+	for i := 0; i < numDetections; i++ {
+		offset := i * rowLen
+		x0 := data[offset+0]
+		y0 := data[offset+1]
+		x1 := data[offset+2]
+		y1 := data[offset+3]
+		score := data[offset+4]
+		clss := int(data[offset+5])
+		if score >= confidenceThreshold {
+			d := &Detection{int(x0), int(y0), int(x1), int(y1), clss, score}
+			detections = append(detections, d)
+		}
+	}
+	return detections
 }

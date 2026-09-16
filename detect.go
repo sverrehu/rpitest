@@ -40,11 +40,11 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
-		_, err = det.Detect(img)
+		detections, err := det.Detect(img)
 		if err != nil {
 			panic(err)
 		}
-		annotateDetections(img)
+		annotateDetections(img, detections)
 		err = rpiview.PostJPEG(img)
 		if err != nil {
 			log.Panic(err)
@@ -52,7 +52,7 @@ func main() {
 	}
 }
 
-func annotateDetections(img image.Image) {
+func annotateDetections(img image.Image, detections []*detector.Detection) {
 	rgba, ok := img.(*image.RGBA)
 	if !ok {
 		panic("Image is not RGBA")
@@ -62,4 +62,8 @@ func annotateDetections(img image.Image) {
 	id.Color(color.RGBA{255, 100, 100, 255})
 	id.Line(0, bounds.Dy()/2, bounds.Dx(), bounds.Dy()/2)
 	id.Line(bounds.Dx()/2, 0, bounds.Dx()/2, bounds.Dy())
+	id.Color(color.RGBA{100, 255, 100, 255})
+	for _, d := range detections {
+		id.Rect(d.X0, d.Y0, d.X1, d.Y1)
+	}
 }
