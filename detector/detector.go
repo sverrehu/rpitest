@@ -61,7 +61,7 @@ func (d *Detector) Detect(img *image.RGBA) ([]*Detection, error) {
 }
 
 func (d *Detector) loadAndProcessImage(img *image.RGBA) (*tensor.Tensor[float32, tensor.Backend], float32, error) {
-	scaledImage, scale := d.ScaleImage(img)
+	scaledImage, scale := d.scaleImage(img)
 	data := make([]float32, 3*d.width*d.height)
 	offsetX := 0
 	offsetY := 0
@@ -85,7 +85,7 @@ func (d *Detector) loadAndProcessImage(img *image.RGBA) (*tensor.Tensor[float32,
 	return t, scale, nil
 }
 
-func (d *Detector) ScaleImage(img *image.RGBA) (*image.RGBA, float32) {
+func (d *Detector) scaleImage(img *image.RGBA) (*image.RGBA, float32) {
 	dst := image.NewRGBA(image.Rect(0, 0, d.width, d.height))
 	hScale := float64(img.Bounds().Dx()) / float64(d.width)
 	vScale := float64(img.Bounds().Dy()) / float64(d.height)
