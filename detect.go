@@ -49,6 +49,7 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
+		log.Printf("Image size: %d x %d", img.Bounds().Dx(), img.Bounds().Dy())
 	}
 }
 
