@@ -12,7 +12,7 @@ import (
 )
 
 const onnxruntimeVersion = "1.29.0"
-const onnxruntimeLibPath = "../../../lib/onnxruntime"
+const onnxruntimeLibPath = "../../lib/onnxruntime"
 
 type ONNXRuntimeDetector struct {
 	modelPath string
