@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"log"
-	"time"
 
 	"github.com/sverrehu/rpitest/camera"
 	"github.com/sverrehu/rpitest/detector"
@@ -38,9 +37,7 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
-		startTime := time.Now()
 		detections, err := det.Detect(img)
-		fmt.Printf("Detection time: %s\n", time.Since(startTime))
 		if err != nil {
 			panic(err)
 		}
