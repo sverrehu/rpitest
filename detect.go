@@ -17,7 +17,7 @@ func main() {
 	//rpiviewHost := "192.168.1.15"
 	rpiviewHost := "192.168.30.21"
 	rpiview := imgposter.NewImagePoster(rpiviewHost, 8086)
-	det := detector.NewDetector("../gotest/gocv/yolo26_face_fp16.onnx", 640, 640)
+	det := detector.NewONNXRuntimeDetector("../gotest/gocv/yolo26_face_fp16.onnx", 640, 640)
 	err := det.Init()
 	if err != nil {
 		panic(err)

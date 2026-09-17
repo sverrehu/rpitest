@@ -8,7 +8,6 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/born-ml/born/tensor"
 	ort "github.com/yalue/onnxruntime_go"
 )
 
@@ -89,49 +88,43 @@ func (d *ONNXRuntimeDetector) Close() {
 }
 
 func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
-	it, scale, err := d.loadAndProcessImage(img)
+	scale, err := d.loadAndProcessImage(img)
 	if err != nil {
 		return nil, err
 	}
-	ot, err := d.model.Forward(it.Raw())
+	err = d.session.Run()
 	if err != nil {
 		return nil, err
 	}
-	detections := d.toDetections(ot, scale)
+	detections := d.toDetections(scale)
 	return detections, nil
 }
 
-func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (*tensor.Tensor[float32, tensor.Backend], float32, error) {
+func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (float32, error) {
 	scaledImage, scale := scaleImage(img, d.width, d.height)
-	data := make([]float32, 3*d.width*d.height)
+	data := d.input.GetData()
 	offsetX := 0
 	offsetY := 0
 	for y := 0; y < d.height; y++ {
 		for x := 0; x < d.width; x++ {
 			r, g, b, _ := scaledImage.At(offsetX+x, offsetY+y).RGBA()
-
 			idxR := 0*d.width*d.height + y*d.height + x
 			idxG := 1*d.width*d.height + y*d.height + x
 			idxB := 2*d.width*d.height + y*d.height + x
-
 			data[idxR] = float32(r) / 65535.0
 			data[idxG] = float32(g) / 65535.0
 			data[idxB] = float32(b) / 65535.0
 		}
 	}
-	t, err := tensor.FromSlice(data, tensor.Shape{1, 3, 640, 640}, d.backend)
-	if err != nil {
-		return nil, 0, err
-	}
-	return t, scale, nil
+	return scale, nil
 }
 
-func (d *ONNXRuntimeDetector) toDetections(t *tensor.RawTensor, scale float32) []*Detection {
+func (d *ONNXRuntimeDetector) toDetections(scale float32) []*Detection {
 	// YOLO26 output format: [batch=1, num_detections=300, 6]
 	// Each detection row: [x1, y1, x2, y2, score, class]
-	data := t.AsFloat32()
-	numDetections := t.Shape()[1]
-	rowLen := t.Shape()[2]
+	data := d.output.GetData()
+	numDetections := int(d.output.GetShape()[1])
+	rowLen := int(d.output.GetShape()[2])
 	confidenceThreshold := float32(0.25)
 	detections := make([]*Detection, 0)
 	for i := 0; i < numDetections; i++ {
