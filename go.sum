@@ -1,3 +1,6 @@
+github.com/microsoft/onnxruntime v1.30.0/go.mod h1:R9EA1HYcr+hh+gpddC+THotq4Wis/Y2vCgVIVxDGfnc=
+github.com/microsoft/onnxruntime/go v0.0.0-20260917091408-bff4fcf7dfc7 h1:Yb65LYINPyEMyjpQDRU3ET5VJBdmuGVHemYPr77nGzY=
+github.com/microsoft/onnxruntime/go v0.0.0-20260917091408-bff4fcf7dfc7/go.mod h1:y6lrwg9wJfp1/eahM089k+5YM7nekCeWhl8UGvefyzo=
 github.com/yalue/onnxruntime_go v1.36.0 h1:iH1Q++DcsyT9sWtN26KYimESlI5hhXpKaChHDS44oV4=
 github.com/yalue/onnxruntime_go v1.36.0/go.mod h1:b4X26A8pekNb1ACJ58wAXgNKeUCGEAQ9dmACut9Sm/4=
 gocv.io/x/gocv v0.43.0 h1:PFNpRUcV8fgBRDbVHHN+4BDZjjPnVveo5N/+e15BTuA=

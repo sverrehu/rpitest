@@ -9,13 +9,13 @@ import (
 	"runtime"
 	"time"
 
-	ort "github.com/microsoft/onnxruntime/go"
+	ort "github.com/yalue/onnxruntime_go"
 )
 
-const onnxruntimeVersion = "1.29.0"
-const onnxruntimeLibPath = "../../lib/onnxruntime"
+const onnxruntimeGoVersion = "1.29.0"
+const onnxruntimeGoLibPath = "../../lib/onnxruntime"
 
-type ONNXRuntimeDetector struct {
+type ONNXRuntimeGoDetector struct {
 	modelPath string
 	width     int
 	height    int
@@ -24,16 +24,16 @@ type ONNXRuntimeDetector struct {
 	output    *ort.Tensor[float32]
 }
 
-func NewONNXRuntimeDetector(modelPath string, width int, height int) *ONNXRuntimeDetector {
-	return &ONNXRuntimeDetector{
+func NewONNXRuntimeGoDetector(modelPath string, width int, height int) *ONNXRuntimeGoDetector {
+	return &ONNXRuntimeGoDetector{
 		modelPath: modelPath,
 		width:     width,
 		height:    height,
 	}
 }
 
-func (d *ONNXRuntimeDetector) Init() error {
-	ort.SetSharedLibraryPath(findSharedLibrary())
+func (d *ONNXRuntimeGoDetector) Init() error {
+	ort.SetSharedLibraryPath(findSharedLibraryGo())
 	err := ort.InitializeEnvironment()
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func (d *ONNXRuntimeDetector) Init() error {
 	return nil
 }
 
-func (d *ONNXRuntimeDetector) Close() {
+func (d *ONNXRuntimeGoDetector) Close() {
 	if d.input != nil {
 		_ = d.input.Destroy()
 		d.input = nil
@@ -88,7 +88,7 @@ func (d *ONNXRuntimeDetector) Close() {
 	}
 }
 
-func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
+func (d *ONNXRuntimeGoDetector) Detect(img *image.RGBA) ([]*Detection, error) {
 	scale, err := d.loadAndProcessImage(img)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
 	return detections, nil
 }
 
-func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (float32, error) {
+func (d *ONNXRuntimeGoDetector) loadAndProcessImage(img *image.RGBA) (float32, error) {
 	scaledImage, scale := scaleImage(img, d.width, d.height)
 	data := d.input.GetData()
 	offsetX := 0
@@ -122,7 +122,7 @@ func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (float32, err
 	return scale, nil
 }
 
-func (d *ONNXRuntimeDetector) toDetections(scale float32) []*Detection {
+func (d *ONNXRuntimeGoDetector) toDetections(scale float32) []*Detection {
 	// YOLO26 output format: [batch=1, num_detections=300, 6]
 	// Each detection row: [x1, y1, x2, y2, score, class]
 	data := d.output.GetData()
@@ -146,15 +146,15 @@ func (d *ONNXRuntimeDetector) toDetections(scale float32) []*Detection {
 	return detections
 }
 
-func findSharedLibrary() string {
+func findSharedLibraryGo() string {
 	if runtime.GOOS == "darwin" {
 		if runtime.GOARCH == "arm64" {
-			return fmt.Sprintf("%s/onnxruntime-osx-arm64-%s/lib/libonnxruntime.%s.dylib", onnxruntimeLibPath, onnxruntimeVersion, onnxruntimeVersion)
+			return fmt.Sprintf("%s/onnxruntime-osx-arm64-%s/lib/libonnxruntime.%s.dylib", onnxruntimeGoLibPath, onnxruntimeGoVersion, onnxruntimeGoVersion)
 		}
 	}
 	if runtime.GOOS == "linux" {
 		if runtime.GOARCH == "arm64" {
-			return fmt.Sprintf("%s/onnxruntime-linux-aarch64-%s/lib/libonnxruntime.so.%s", onnxruntimeLibPath, onnxruntimeVersion, onnxruntimeVersion)
+			return fmt.Sprintf("%s/onnxruntime-linux-aarch64-%s/lib/libonnxruntime.so.%s", onnxruntimeGoLibPath, onnxruntimeGoVersion, onnxruntimeGoVersion)
 		}
 	}
 	log.Fatalf("Unable to determine a path to the onnxruntime shared library for OS \"%s\" and architecture \"%s\".\n",
