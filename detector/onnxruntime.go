@@ -1,12 +1,13 @@
 package detector
 
+// https://github.com/yalue/onnxruntime_go_examples/blob/master/image_object_detect/image_object_detect.go
+
 import (
 	"fmt"
 	"image"
 	"log"
 	"runtime"
 
-	"github.com/born-ml/born/onnx"
 	"github.com/born-ml/born/tensor"
 	ort "github.com/yalue/onnxruntime_go"
 )
@@ -18,8 +19,9 @@ type ONNXRuntimeDetector struct {
 	modelPath string
 	width     int
 	height    int
-	backend   tensor.Backend
-	model     onnx.Model
+	session   *ort.AdvancedSession
+	input     *ort.Tensor[float32]
+	output    *ort.Tensor[float32]
 }
 
 func NewONNXRuntimeDetector(modelPath string, width int, height int) *ONNXRuntimeDetector {
@@ -36,11 +38,54 @@ func (d *ONNXRuntimeDetector) Init() error {
 	if err != nil {
 		return err
 	}
+	inputShape := ort.NewShape(1, 3, int64(d.width), int64(d.height))
+	inputTensor, err := ort.NewEmptyTensor[float32](inputShape)
+	if err != nil {
+		return err
+	}
+	outputShape := ort.NewShape(1, 300, 6)
+	outputTensor, err := ort.NewEmptyTensor[float32](outputShape)
+	if err != nil {
+		_ = inputTensor.Destroy()
+		return err
+	}
+	options, err := ort.NewSessionOptions()
+	if err != nil {
+		_ = inputTensor.Destroy()
+		_ = outputTensor.Destroy()
+		return err
+	}
+	defer options.Destroy()
+
+	session, err := ort.NewAdvancedSession(d.modelPath,
+		[]string{"images"}, []string{"output0"},
+		[]ort.ArbitraryTensor{inputTensor},
+		[]ort.ArbitraryTensor{outputTensor},
+		options)
+	if err != nil {
+		_ = inputTensor.Destroy()
+		_ = outputTensor.Destroy()
+		return err
+	}
+	d.session = session
+	d.input = inputTensor
+	d.output = outputTensor
 	return nil
 }
 
 func (d *ONNXRuntimeDetector) Close() {
-	_ = ort.DestroyEnvironment()
+	if d.input != nil {
+		_ = d.input.Destroy()
+		d.input = nil
+	}
+	if d.output != nil {
+		_ = d.output.Destroy()
+		d.output = nil
+	}
+	if d.session != nil {
+		_ = d.session.Destroy()
+		d.session = nil
+	}
 }
 
 func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
