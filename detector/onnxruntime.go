@@ -89,21 +89,17 @@ func (d *ONNXRuntimeDetector) Close() {
 }
 
 func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
-	st := time.Now()
 	scale, err := d.loadAndProcessImage(img)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("loadAndProcessImage time: %s\n", time.Since(st))
-	st = time.Now()
+	st := time.Now()
 	err = d.session.Run()
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("session.Run time: %s\n", time.Since(st))
-	st = time.Now()
 	detections := d.toDetections(scale)
-	log.Printf("toDetections time: %s\n", time.Since(st))
 	return detections, nil
 }
 
