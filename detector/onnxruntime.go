@@ -1,12 +1,18 @@
 package detector
 
 import (
+	"fmt"
 	"image"
+	"log"
+	"runtime"
 
-	"github.com/born-ml/born/backend/cpu"
 	"github.com/born-ml/born/onnx"
 	"github.com/born-ml/born/tensor"
+	ort "github.com/yalue/onnxruntime_go"
 )
+
+const onnxruntimeVersion = "1.29.0"
+const onnxruntimeLibPath = "../../../lib/onnxruntime"
 
 type ONNXRuntimeDetector struct {
 	modelPath string
@@ -25,17 +31,16 @@ func NewONNXRuntimeDetector(modelPath string, width int, height int) *ONNXRuntim
 }
 
 func (d *ONNXRuntimeDetector) Init() error {
-	be := cpu.New()
-	model, err := onnx.Load(d.modelPath, be)
+	ort.SetSharedLibraryPath(findSharedLibrary())
+	err := ort.InitializeEnvironment()
 	if err != nil {
 		return err
 	}
-	d.backend = be
-	d.model = model
 	return nil
 }
 
 func (d *ONNXRuntimeDetector) Close() {
+	_ = ort.DestroyEnvironment()
 }
 
 func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
@@ -98,4 +103,20 @@ func (d *ONNXRuntimeDetector) toDetections(t *tensor.RawTensor, scale float32) [
 		}
 	}
 	return detections
+}
+
+func findSharedLibrary() string {
+	if runtime.GOOS == "darwin" {
+		if runtime.GOARCH == "arm64" {
+			return fmt.Sprintf("%s/onnxruntime-osx-arm64-%s/lib/libonnxruntime.%s.dylib", onnxruntimeLibPath, onnxruntimeVersion, onnxruntimeVersion)
+		}
+	}
+	if runtime.GOOS == "linux" {
+		if runtime.GOARCH == "arm64" {
+			return fmt.Sprintf("%s/onnxruntime-linux-aarch64-%s/lib/libonnxruntime.so.%s", onnxruntimeLibPath, onnxruntimeVersion, onnxruntimeVersion)
+		}
+	}
+	log.Fatalf("Unable to determine a path to the onnxruntime shared library for OS \"%s\" and architecture \"%s\".\n",
+		runtime.GOOS, runtime.GOARCH)
+	return "//never gets here"
 }
