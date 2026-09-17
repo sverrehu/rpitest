@@ -29,10 +29,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
 	fmt.Println("Starting continuous image capture... Press Ctrl+C to stop.")
-	for range ticker.C {
+	for {
 		img, err := cam.GetImage()
 		if img == nil {
 			continue
@@ -40,7 +38,9 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
+		startTime := time.Now()
 		detections, err := det.Detect(img)
+		fmt.Printf("Detection time: %s\n", time.Since(startTime))
 		if err != nil {
 			panic(err)
 		}
