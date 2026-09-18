@@ -17,14 +17,12 @@ const onnxruntimeVersion = "1.30.0"
 const onnxruntimeLibPath = "../../lib/onnxruntime"
 
 type ONNXRuntimeDetector struct {
-	modelPath  string
-	width      int
-	height     int
-	session    *ort.Session
-	input      *ort.Tensor
-	inputData  []float32
-	output     *ort.Tensor
-	outputData []float32
+	modelPath string
+	width     int
+	height    int
+	session   *ort.Session
+	input     *ort.Tensor
+	inputData []float32
 }
 
 func NewONNXRuntimeDetector(modelPath string, width int, height int) *ONNXRuntimeDetector {
@@ -42,38 +40,28 @@ func (d *ONNXRuntimeDetector) Init() error {
 		return err
 	}
 	inputShape := []int64{1, 3, int64(d.width), int64(d.height)}
-	inputData := make([]float32, 3*d.width*d.height)
-	inputTensor, err := ort.CreateTensor[float32](inputShape, inputData)
+	d.inputData = make([]float32, 3*d.width*d.height)
+	d.input, err = ort.CreateTensor[float32](inputShape, d.inputData)
 	if err != nil {
-		return err
-	}
-	outputShape := []int64{1, 300, 6}
-	outputData := make([]float32, 300*6)
-	outputTensor, err := ort.CreateTensor[float32](outputShape, outputData)
-	if err != nil {
-		_ = inputTensor.Close()
 		return err
 	}
 	options, err := ort.NewSessionOptions()
 	if err != nil {
-		_ = inputTensor.Close()
-		_ = outputTensor.Close()
+		d.Close()
 		return err
 	}
-	options.AppendExecutionProvider("WebGpuExecutionProvider", nil)
 	defer options.Close()
-
-	session, err := ort.NewSession(d.modelPath, options)
+	err = options.AppendExecutionProvider("WebGpuExecutionProvider", nil)
 	if err != nil {
-		_ = inputTensor.Close()
-		_ = outputTensor.Close()
+		d.Close()
 		return err
 	}
-	d.session = session
-	d.input = inputTensor
-	d.inputData = inputData
-	d.output = outputTensor
-	d.outputData = outputData
+
+	d.session, err = ort.NewSession(d.modelPath, options)
+	if err != nil {
+		d.Close()
+		return err
+	}
 	return nil
 }
 
@@ -81,10 +69,6 @@ func (d *ONNXRuntimeDetector) Close() {
 	if d.input != nil {
 		_ = d.input.Close()
 		d.input = nil
-	}
-	if d.output != nil {
-		_ = d.output.Close()
-		d.output = nil
 	}
 	if d.session != nil {
 		_ = d.session.Close()
@@ -140,8 +124,8 @@ func (d *ONNXRuntimeDetector) toDetections(outTensor *ort.Tensor, scale float32)
 	if err != nil {
 		return nil, err
 	}
-	numDetections := int(d.output.Shape()[1])
-	rowLen := int(d.output.Shape()[2])
+	numDetections := int(outTensor.Shape()[1])
+	rowLen := int(outTensor.Shape()[2])
 	confidenceThreshold := float32(0.25)
 	detections := make([]*Detection, 0)
 	for i := 0; i < numDetections; i++ {
