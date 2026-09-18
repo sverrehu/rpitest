@@ -60,6 +60,7 @@ func (d *ONNXRuntimeDetector) Init() error {
 		_ = outputTensor.Close()
 		return err
 	}
+	options.AppendExecutionProvider("WebGpuExecutionProvider", nil)
 	defer options.Close()
 
 	session, err := ort.NewSession(d.modelPath, options)
