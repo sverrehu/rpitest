@@ -16,12 +16,14 @@ const onnxruntimeVersion = "1.30.0"
 const onnxruntimeLibPath = "../../lib/onnxruntime"
 
 type ONNXRuntimeDetector struct {
-	modelPath string
-	width     int
-	height    int
-	session   *ort.AdvancedSession
-	input     *ort.Tensor[float32]
-	output    *ort.Tensor[float32]
+	modelPath  string
+	width      int
+	height     int
+	session    *ort.Session
+	input      *ort.Tensor
+	inputData  []float32
+	output     *ort.Tensor
+	outputData []float32
 }
 
 func NewONNXRuntimeDetector(modelPath string, width int, height int) *ONNXRuntimeDetector {
@@ -34,58 +36,59 @@ func NewONNXRuntimeDetector(modelPath string, width int, height int) *ONNXRuntim
 
 func (d *ONNXRuntimeDetector) Init() error {
 	ort.SetSharedLibraryPath(findSharedLibrary())
-	err := ort.InitializeEnvironment()
+	err := ort.Init()
 	if err != nil {
 		return err
 	}
-	inputShape := ort.NewShape(1, 3, int64(d.width), int64(d.height))
-	inputTensor, err := ort.NewEmptyTensor[float32](inputShape)
+	inputShape := []int64{1, 3, int64(d.width), int64(d.height)}
+	inputData := make([]float32, 3*d.width*d.height)
+	inputTensor, err := ort.CreateTensor[float32](inputShape, inputData)
 	if err != nil {
 		return err
 	}
-	outputShape := ort.NewShape(1, 300, 6)
-	outputTensor, err := ort.NewEmptyTensor[float32](outputShape)
+	outputShape := []int64{1, 300, 6}
+	outputData := make([]float32, 300*6)
+	outputTensor, err := ort.CreateTensor[float32](outputShape, outputData)
 	if err != nil {
-		_ = inputTensor.Destroy()
+		_ = inputTensor.Close()
 		return err
 	}
 	options, err := ort.NewSessionOptions()
 	if err != nil {
-		_ = inputTensor.Destroy()
-		_ = outputTensor.Destroy()
+		_ = inputTensor.Close()
+		_ = outputTensor.Close()
 		return err
 	}
-	defer options.Destroy()
+	defer options.Close()
 
-	session, err := ort.NewAdvancedSession(d.modelPath,
-		[]string{"images"}, []string{"output0"},
-		[]ort.ArbitraryTensor{inputTensor},
-		[]ort.ArbitraryTensor{outputTensor},
-		options)
+	session, err := ort.NewSession(d.modelPath, options)
 	if err != nil {
-		_ = inputTensor.Destroy()
-		_ = outputTensor.Destroy()
+		_ = inputTensor.Close()
+		_ = outputTensor.Close()
 		return err
 	}
 	d.session = session
 	d.input = inputTensor
+	d.inputData = inputData
 	d.output = outputTensor
+	d.outputData = outputData
 	return nil
 }
 
 func (d *ONNXRuntimeDetector) Close() {
 	if d.input != nil {
-		_ = d.input.Destroy()
+		_ = d.input.Close()
 		d.input = nil
 	}
 	if d.output != nil {
-		_ = d.output.Destroy()
+		_ = d.output.Close()
 		d.output = nil
 	}
 	if d.session != nil {
-		_ = d.session.Destroy()
+		_ = d.session.Close()
 		d.session = nil
 	}
+	_ = ort.Shutdown()
 }
 
 func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
