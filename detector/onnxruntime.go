@@ -39,6 +39,11 @@ func (d *ONNXRuntimeDetector) Init() error {
 	if err != nil {
 		return err
 	}
+	providers, _ := ort.AvailableProviders()
+	for _, provider := range providers {
+		log.Printf("Available provider: %s", provider)
+	}
+
 	inputShape := []int64{1, 3, int64(d.width), int64(d.height)}
 	d.inputData = make([]float32, 3*d.width*d.height)
 	d.input, err = ort.CreateTensor[float32](inputShape, d.inputData)
