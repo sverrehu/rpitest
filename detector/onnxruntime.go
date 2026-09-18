@@ -3,6 +3,7 @@ package detector
 // https://github.com/yalue/onnxruntime_go_examples/blob/master/image_object_detect/image_object_detect.go
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"log"
@@ -97,9 +98,15 @@ func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
 		return nil, err
 	}
 	st := time.Now()
-	err = d.session.Run()
+	results, err := d.session.Run(context.Background(), map[string]*ort.Tensor{
+		"images":  d.input,
+		"output0": d.output,
+	}, nil)
 	if err != nil {
 		return nil, err
+	}
+	if results["output0"] == nil {
+		return nil, fmt.Errorf("output0 is nil")
 	}
 	log.Printf("session.Run time: %s\n", time.Since(st))
 	detections := d.toDetections(scale)
@@ -108,7 +115,7 @@ func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
 
 func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (float32, error) {
 	scaledImage, scale := scaleImage(img, d.width, d.height)
-	data := d.input.GetData()
+	data := d.inputData
 	offsetX := 0
 	offsetY := 0
 	for y := 0; y < d.height; y++ {
@@ -128,9 +135,9 @@ func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (float32, err
 func (d *ONNXRuntimeDetector) toDetections(scale float32) []*Detection {
 	// YOLO26 output format: [batch=1, num_detections=300, 6]
 	// Each detection row: [x1, y1, x2, y2, score, class]
-	data := d.output.GetData()
-	numDetections := int(d.output.GetShape()[1])
-	rowLen := int(d.output.GetShape()[2])
+	data := d.outputData
+	numDetections := int(d.output.Shape()[1])
+	rowLen := int(d.output.Shape()[2])
 	confidenceThreshold := float32(0.25)
 	detections := make([]*Detection, 0)
 	for i := 0; i < numDetections; i++ {
