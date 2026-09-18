@@ -99,8 +99,7 @@ func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
 	}
 	st := time.Now()
 	results, err := d.session.Run(context.Background(), map[string]*ort.Tensor{
-		"images":  d.input,
-		"output0": d.output,
+		"images": d.input,
 	}, nil)
 	if err != nil {
 		return nil, err
