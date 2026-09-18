@@ -9,10 +9,10 @@ import (
 	"runtime"
 	"time"
 
-	ort "github.com/microsoft/onnxruntime/go"
+	ort "github.com/microsoft/onnxruntime/go/onnxruntime"
 )
 
-const onnxruntimeVersion = "1.29.0"
+const onnxruntimeVersion = "1.30.0"
 const onnxruntimeLibPath = "../../lib/onnxruntime"
 
 type ONNXRuntimeDetector struct {

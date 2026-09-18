@@ -15,6 +15,6 @@ require (
 )
 
 require (
-	github.com/microsoft/onnxruntime/go v0.0.0-20260917091408-bff4fcf7dfc7 // indirect
+	github.com/microsoft/onnxruntime/go v0.0.0-20260918001909-bc8e7ed75c8b // indirect
 	golang.org/x/sys v0.48.0 // indirect
 )
