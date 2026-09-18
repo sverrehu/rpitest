@@ -51,11 +51,11 @@ func (d *ONNXRuntimeDetector) Init() error {
 		return err
 	}
 	defer options.Close()
-	err = options.AppendExecutionProvider("WebGpuExecutionProvider", nil)
-	if err != nil {
-		d.Close()
-		return err
-	}
+	//err = options.AppendExecutionProvider("WebGpuExecutionProvider", nil)
+	//if err != nil {
+	//	d.Close()
+	//	return err
+	//}
 
 	d.session, err = ort.NewSession(d.modelPath, options)
 	if err != nil {
