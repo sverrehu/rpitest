@@ -104,12 +104,13 @@ func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
 	if err != nil {
 		return nil, err
 	}
-	if results["output0"] == nil {
+	outTensor := results["output0"]
+	if outTensor == nil {
 		return nil, fmt.Errorf("output0 is nil")
 	}
+	defer outTensor.Close()
 	log.Printf("session.Run time: %s\n", time.Since(st))
-	detections := d.toDetections(scale)
-	return detections, nil
+	return d.toDetections(outTensor, scale)
 }
 
 func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (float32, error) {
@@ -131,10 +132,13 @@ func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (float32, err
 	return scale, nil
 }
 
-func (d *ONNXRuntimeDetector) toDetections(scale float32) []*Detection {
+func (d *ONNXRuntimeDetector) toDetections(outTensor *ort.Tensor, scale float32) ([]*Detection, error) {
 	// YOLO26 output format: [batch=1, num_detections=300, 6]
 	// Each detection row: [x1, y1, x2, y2, score, class]
-	data := d.outputData
+	data, err := ort.TensorData[float32](outTensor)
+	if err != nil {
+		return nil, err
+	}
 	numDetections := int(d.output.Shape()[1])
 	rowLen := int(d.output.Shape()[2])
 	confidenceThreshold := float32(0.25)
@@ -152,7 +156,7 @@ func (d *ONNXRuntimeDetector) toDetections(scale float32) []*Detection {
 			detections = append(detections, d)
 		}
 	}
-	return detections
+	return detections, nil
 }
 
 func findSharedLibrary() string {
