@@ -3,25 +3,26 @@ package detector
 // https://github.com/yalue/onnxruntime_go_examples/blob/master/image_object_detect/image_object_detect.go
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"log"
 	"runtime"
+	"time"
 
-	"github.com/born-ml/born/tensor"
-	ort "github.com/yalue/onnxruntime_go"
+	ort "github.com/microsoft/onnxruntime/go/onnxruntime"
 )
 
-const onnxruntimeVersion = "1.29.0"
-const onnxruntimeLibPath = "../../../lib/onnxruntime"
+const onnxruntimeVersion = "1.32.0"
+const onnxruntimeLibPath = "../../lib/onnxruntime"
 
 type ONNXRuntimeDetector struct {
 	modelPath string
 	width     int
 	height    int
-	session   *ort.AdvancedSession
-	input     *ort.Tensor[float32]
-	output    *ort.Tensor[float32]
+	session   *ort.Session
+	input     *ort.Tensor
+	inputData []float32
 }
 
 func NewONNXRuntimeDetector(modelPath string, width int, height int) *ONNXRuntimeDetector {
@@ -34,104 +35,102 @@ func NewONNXRuntimeDetector(modelPath string, width int, height int) *ONNXRuntim
 
 func (d *ONNXRuntimeDetector) Init() error {
 	ort.SetSharedLibraryPath(findSharedLibrary())
-	err := ort.InitializeEnvironment()
+	err := ort.Init()
 	if err != nil {
 		return err
 	}
-	inputShape := ort.NewShape(1, 3, int64(d.width), int64(d.height))
-	inputTensor, err := ort.NewEmptyTensor[float32](inputShape)
-	if err != nil {
-		return err
+	providers, _ := ort.AvailableProviders()
+	for _, provider := range providers {
+		log.Printf("Available provider: %s", provider)
 	}
-	outputShape := ort.NewShape(1, 300, 6)
-	outputTensor, err := ort.NewEmptyTensor[float32](outputShape)
+
+	inputShape := []int64{1, 3, int64(d.width), int64(d.height)}
+	d.inputData = make([]float32, 3*d.width*d.height)
+	d.input, err = ort.CreateTensor[float32](inputShape, d.inputData)
 	if err != nil {
-		_ = inputTensor.Destroy()
 		return err
 	}
 	options, err := ort.NewSessionOptions()
 	if err != nil {
-		_ = inputTensor.Destroy()
-		_ = outputTensor.Destroy()
+		d.Close()
 		return err
 	}
-	defer options.Destroy()
+	defer options.Close()
+	//err = options.AppendExecutionProvider("WebGpuExecutionProvider", nil)
+	//if err != nil {
+	//	d.Close()
+	//	return err
+	//}
 
-	session, err := ort.NewAdvancedSession(d.modelPath,
-		[]string{"images"}, []string{"output0"},
-		[]ort.ArbitraryTensor{inputTensor},
-		[]ort.ArbitraryTensor{outputTensor},
-		options)
+	d.session, err = ort.NewSession(d.modelPath, options)
 	if err != nil {
-		_ = inputTensor.Destroy()
-		_ = outputTensor.Destroy()
+		d.Close()
 		return err
 	}
-	d.session = session
-	d.input = inputTensor
-	d.output = outputTensor
 	return nil
 }
 
 func (d *ONNXRuntimeDetector) Close() {
 	if d.input != nil {
-		_ = d.input.Destroy()
+		_ = d.input.Close()
 		d.input = nil
 	}
-	if d.output != nil {
-		_ = d.output.Destroy()
-		d.output = nil
-	}
 	if d.session != nil {
-		_ = d.session.Destroy()
+		_ = d.session.Close()
 		d.session = nil
 	}
+	_ = ort.Shutdown()
 }
 
 func (d *ONNXRuntimeDetector) Detect(img *image.RGBA) ([]*Detection, error) {
-	it, scale, err := d.loadAndProcessImage(img)
+	scale, err := d.loadAndProcessImage(img)
 	if err != nil {
 		return nil, err
 	}
-	ot, err := d.model.Forward(it.Raw())
+	st := time.Now()
+	results, err := d.session.Run(context.Background(), map[string]*ort.Tensor{
+		"images": d.input,
+	}, nil)
 	if err != nil {
 		return nil, err
 	}
-	detections := d.toDetections(ot, scale)
-	return detections, nil
+	outTensor := results["output0"]
+	if outTensor == nil {
+		return nil, fmt.Errorf("output0 is nil")
+	}
+	defer outTensor.Close()
+	log.Printf("session.Run time: %s\n", time.Since(st))
+	return d.toDetections(outTensor, scale)
 }
 
-func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (*tensor.Tensor[float32, tensor.Backend], float32, error) {
+func (d *ONNXRuntimeDetector) loadAndProcessImage(img *image.RGBA) (float32, error) {
 	scaledImage, scale := scaleImage(img, d.width, d.height)
-	data := make([]float32, 3*d.width*d.height)
+	data := d.inputData
 	offsetX := 0
 	offsetY := 0
 	for y := 0; y < d.height; y++ {
 		for x := 0; x < d.width; x++ {
 			r, g, b, _ := scaledImage.At(offsetX+x, offsetY+y).RGBA()
-
 			idxR := 0*d.width*d.height + y*d.height + x
 			idxG := 1*d.width*d.height + y*d.height + x
 			idxB := 2*d.width*d.height + y*d.height + x
-
 			data[idxR] = float32(r) / 65535.0
 			data[idxG] = float32(g) / 65535.0
 			data[idxB] = float32(b) / 65535.0
 		}
 	}
-	t, err := tensor.FromSlice(data, tensor.Shape{1, 3, 640, 640}, d.backend)
-	if err != nil {
-		return nil, 0, err
-	}
-	return t, scale, nil
+	return scale, nil
 }
 
-func (d *ONNXRuntimeDetector) toDetections(t *tensor.RawTensor, scale float32) []*Detection {
+func (d *ONNXRuntimeDetector) toDetections(outTensor *ort.Tensor, scale float32) ([]*Detection, error) {
 	// YOLO26 output format: [batch=1, num_detections=300, 6]
 	// Each detection row: [x1, y1, x2, y2, score, class]
-	data := t.AsFloat32()
-	numDetections := t.Shape()[1]
-	rowLen := t.Shape()[2]
+	data, err := ort.TensorData[float32](outTensor)
+	if err != nil {
+		return nil, err
+	}
+	numDetections := int(outTensor.Shape()[1])
+	rowLen := int(outTensor.Shape()[2])
 	confidenceThreshold := float32(0.25)
 	detections := make([]*Detection, 0)
 	for i := 0; i < numDetections; i++ {
@@ -147,7 +146,7 @@ func (d *ONNXRuntimeDetector) toDetections(t *tensor.RawTensor, scale float32) [
 			detections = append(detections, d)
 		}
 	}
-	return detections
+	return detections, nil
 }
 
 func findSharedLibrary() string {

@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"log"
-	"time"
 
 	"github.com/sverrehu/rpitest/camera"
 	"github.com/sverrehu/rpitest/detector"
@@ -14,10 +13,10 @@ import (
 )
 
 func main() {
-	//rpiviewHost := "192.168.1.15"
-	rpiviewHost := "192.168.30.21"
+	rpiviewHost := "192.168.1.15"
+	//rpiviewHost := "192.168.30.21"
 	rpiview := imgposter.NewImagePoster(rpiviewHost, 8086)
-	det := detector.NewDetector("../gotest/gocv/yolo26_face_fp16.onnx", 640, 640)
+	det := detector.NewONNXRuntimeDetector("../gotest/gocv/yolo26_face_fp16.onnx", 640, 640)
 	err := det.Init()
 	if err != nil {
 		panic(err)
@@ -29,10 +28,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
 	fmt.Println("Starting continuous image capture... Press Ctrl+C to stop.")
-	for range ticker.C {
+	for {
 		img, err := cam.GetImage()
 		if img == nil {
 			continue
@@ -49,7 +46,6 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
-		log.Printf("Image size: %d x %d", img.Bounds().Dx(), img.Bounds().Dy())
 	}
 }
 
