@@ -1,0 +1,83 @@
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/sverrehu/rpitest/camera"
+	"github.com/sverrehu/rpitest/imgposter"
+	"github.com/sverrehu/rpitest/twoaxis"
+)
+
+const panChan = 2
+const tiltChan = 3
+
+var axis *twoaxis.TwoAxis
+
+func main() {
+	rpiviewHost := "192.168.1.15"
+	//rpiviewHost := "192.168.30.21"
+	rpiview := imgposter.NewImagePoster(rpiviewHost, 8086)
+	cam := camera.NewCamera()
+	defer cam.Close()
+	cam.Rotate = true
+	err := cam.StartStreaming(nil)
+	if err != nil {
+		panic(err)
+	}
+	axis = twoaxis.NewTwoAxis(panChan, tiltChan)
+	err = axis.Init()
+	if err != nil {
+		log.Panic(err)
+	}
+	installTerminationHandler()
+	dPan := 0.0
+	dTilt := 0.3
+	pan := axis.GetPan()
+	tilt := axis.GetTilt()
+	for {
+		err := axis.PanTilt(pan, tilt)
+		if err != nil {
+			log.Panic(err)
+		}
+		img, err := cam.GetImage()
+		if img == nil {
+			continue
+		}
+		if err != nil {
+			log.Panic(err)
+		}
+		err = rpiview.PostJPEG(img)
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Printf("Pan: %f, Tilt: %f", pan, tilt)
+		pan += dPan
+		if pan < axis.PanMinAngle || pan > axis.PanMaxAngle {
+			dPan = -dPan
+			pan += dPan
+		}
+		tilt += dTilt
+		if tilt < axis.TiltMinAngle || tilt > axis.TiltMaxAngle {
+			dTilt = -dTilt
+			tilt += dTilt
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func installTerminationHandler() {
+	go func() {
+		ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+		defer stop()
+		<-ctx.Done()
+		log.Println("Shutting down...")
+		axis.Close()
+		log.Println("Done.")
+		os.Exit(0)
+	}()
+}

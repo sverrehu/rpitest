@@ -2,7 +2,18 @@ module github.com/sverrehu/rpitest
 
 go 1.27.0
 
+replace github.com/sverrehu/rpigo => ./../rpigo
+
+replace github.com/born-ml/born => ../../src/born.sverrehu
+
 require (
-	github.com/sverrehu/rpigo v0.0.0-20260907171132-0adb77f39bdc // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	github.com/born-ml/born v0.9.24
+	github.com/microsoft/onnxruntime/go v0.0.0-20261117162411-d1ff4a4e3b32
+	github.com/sverrehu/rpigo v0.0.0
+	github.com/yalue/onnxruntime_go v1.38.0
+	gocv.io/x/gocv v0.43.0
+	golang.org/x/image v0.48.0
+	github.com/sverrehu/goutils v1.0.5
 )
+
+require golang.org/x/sys v0.50.0 // indirect
