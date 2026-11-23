@@ -76,12 +76,6 @@ func (m *MotionDetector) prepare(img image.Image) *image.Gray {
 	return gray
 }
 
-func (m *MotionDetector) grayAt(img image.Image, x, y int) int {
-	r, g, b, _ := img.At(x, y).RGBA()
-	r8, g8, b8 := uint8(r>>8), uint8(g>>8), uint8(b>>8)
-	return int(r8+g8+b8) / 3
-}
-
 func abs(n int) int {
 	// Why is there no integer abs in Go?
 	if n >= 0 {
