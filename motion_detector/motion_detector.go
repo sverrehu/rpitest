@@ -1,7 +1,6 @@
 package motion_detector
 
 import (
-	"fmt"
 	"image"
 
 	"github.com/sverrehu/goutils/image/scaling"
@@ -53,7 +52,7 @@ func (m *MotionDetector) IsMotion(img image.Image) bool {
 		}
 	}
 	changedPercentage := 100.0 * float64(numChanged) / float64(numSamples)
-	fmt.Println("changedPercentage", changedPercentage)
+	//fmt.Println("changedPercentage", changedPercentage)
 	isMotion := changedPercentage > m.requiredChangePercentage
 	if isMotion {
 		m.prevImg = newImg

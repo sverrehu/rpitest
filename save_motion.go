@@ -43,7 +43,7 @@ func main() {
 			log.Panic(err)
 		}
 		if md.IsMotion(img) {
-			fmt.Println("motion")
+			//fmt.Println("motion")
 			//err = rpiview.PostJPEG(md.GetPrevImg()) //img)
 			err = saveMotionImage(img)
 			if err != nil {
